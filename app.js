@@ -10,7 +10,7 @@ const CONFIG_FIREBASE = {
   appId: '1:56342358750:web:97f51a64fce1998792b04f'
 };
 
-const VERSION = '2.0';
+const VERSION = '2.1';
 const $ = function (id) { return document.getElementById(id); };
 const params = new URLSearchParams(location.search);
 const MODE_DEMO = params.has('demo') || !CONFIG_FIREBASE.apiKey;
@@ -385,7 +385,9 @@ function graines() {
 
 function planifierRendu() {
   if (UI.rendu) { return; }
-  UI.rendu = requestAnimationFrame(function () { UI.rendu = 0; rendre(); });
+  const lancer = function () { UI.rendu = 0; rendre(); };
+  // Une page en arrière-plan ne reçoit pas d'image d'animation : on passe par un minuteur.
+  UI.rendu = document.hidden ? setTimeout(lancer, 0) : requestAnimationFrame(lancer);
 }
 
 function remplacer(el, html) {

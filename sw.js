@@ -1,5 +1,5 @@
 // Garde l'app ouvrable sans réseau (utile dans les allées où ça ne capte pas).
-const CACHE = 'lepanier-v2-0';
+const CACHE = 'lepanier-v2-1';
 const FICHIERS = ['./', './index.html', './app.js', './cuisine.js', './firebase.js', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', function (ev) {
