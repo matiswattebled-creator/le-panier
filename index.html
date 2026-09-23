@@ -1,0 +1,967 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Le Panier</title>
+<meta name="description" content="Nos courses, nos repas de la semaine et nos recettes, synchronisés à deux.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Le Panier">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1A1B1A" media="(prefers-color-scheme: dark)">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<style>
+  :root {
+    --fond: #F2F2EE;
+    --surface: #FFFFFF;
+    --encre: #151714;
+    --secondaire: #62675F;
+    --tertiaire: #A3A79F;
+    --separateur: #E3E4DF;
+    --accent: #1E7A4C;
+    --accent-doux: #E2F0E8;
+    --sur-accent: #FFFFFF;
+    --ambre: #8F5400;
+    --ambre-doux: #FBEFD8;
+    --bleu: #2A5BA6;
+    --bleu-doux: #E5EDF8;
+    --rouge: #B8322A;
+    --rouge-doux: #FAE6E4;
+    --voile: rgba(21, 23, 20, 0.36);
+    --ombre-feuille: 0 -8px 30px rgba(21, 23, 20, 0.12);
+    --rayon-groupe: 12px;
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fond: #0C0D0C;
+      --surface: #1A1B1A;
+      --encre: #F1F2EF;
+      --secondaire: #A2A79F;
+      --tertiaire: #5F645D;
+      --separateur: #2C2E2B;
+      --accent: #58C48C;
+      --accent-doux: #13301F;
+      --sur-accent: #06130B;
+      --ambre: #F0B355;
+      --ambre-doux: #33250D;
+      --bleu: #8AAEEE;
+      --bleu-doux: #15223A;
+      --rouge: #FF7B6F;
+      --rouge-doux: #3A1512;
+      --voile: rgba(0, 0, 0, 0.55);
+      --ombre-feuille: 0 -8px 30px rgba(0, 0, 0, 0.5);
+      color-scheme: dark;
+    }
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    overscroll-behavior: none;
+  }
+
+  html { background: var(--surface); }
+
+  body {
+    background: var(--fond);
+    color: var(--encre);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    font-size: 17px;
+    line-height: 1.35;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  [hidden] { display: none !important; }
+
+  button, input, textarea, select { font: inherit; color: inherit; }
+
+  button { cursor: pointer; }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* En-tête */
+  .entete {
+    background: var(--surface);
+    padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 12px 16px;
+    border-bottom: 0.5px solid var(--separateur);
+    flex-shrink: 0;
+  }
+
+  .entete-ligne {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    min-height: 44px;
+  }
+
+  .entete-textes { flex-grow: 1; min-width: 0; }
+
+  .entete h1 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+
+  .entete-sous {
+    margin-top: 3px;
+    font-size: 14px;
+    color: var(--secondaire);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .entete-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+  .bouton-rond {
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 20px;
+    border: none;
+    background: var(--fond);
+    color: var(--encre);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .bouton-rond.actif { background: var(--accent); color: var(--sur-accent); }
+
+  .bouton-rond svg { flex-shrink: 0; }
+
+  /* Vues */
+  .vues { flex-grow: 1; min-height: 0; position: relative; }
+
+  .vue {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .defile {
+    flex-grow: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 28px;
+  }
+
+  /* Barre d'ajout */
+  .barre-ajout {
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px 8px 16px;
+    background: var(--fond);
+    flex-shrink: 0;
+  }
+
+  .champ {
+    width: 100%;
+    min-height: 44px;
+    border: 0.5px solid var(--separateur);
+    border-radius: 12px;
+    background: var(--surface);
+    padding: 10px 14px;
+    font-size: 17px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .champ:focus { border-color: var(--accent); }
+
+  textarea.champ { line-height: 1.5; resize: vertical; min-height: 120px; }
+
+  .puces {
+    display: flex;
+    gap: 7px;
+    overflow-x: auto;
+    padding: 2px 16px 10px 16px;
+    scrollbar-width: none;
+    flex-shrink: 0;
+    background: var(--fond);
+  }
+
+  .puces::-webkit-scrollbar { display: none; }
+
+  .puce {
+    flex-shrink: 0;
+    height: 34px;
+    padding: 0 13px;
+    border-radius: 17px;
+    border: 0.5px solid var(--separateur);
+    background: var(--surface);
+    font-size: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+  }
+
+  .puce .plus { color: var(--accent); font-weight: 700; }
+
+  .puce.choisie { background: var(--encre); color: var(--fond); border-color: var(--encre); }
+
+  /* Groupes façon iOS */
+  .titre-section {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 20px 32px 7px 32px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--secondaire);
+  }
+
+  .titre-section .compte {
+    margin-left: auto;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .titre-section.ailleurs { color: var(--bleu); }
+
+  .groupe {
+    margin: 0 16px;
+    background: var(--surface);
+    border-radius: var(--rayon-groupe);
+    overflow: hidden;
+  }
+
+  .ligne {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 50px;
+    padding: 8px 14px;
+    position: relative;
+    width: 100%;
+    background: transparent;
+    border: none;
+    text-align: left;
+  }
+
+  .ligne + .ligne::before,
+  .ligne-bloc + .ligne-bloc::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 50px;
+    height: 0.5px;
+    background: var(--separateur);
+  }
+
+  .groupe.simple .ligne + .ligne::before { left: 14px; }
+
+  .ligne-bloc { position: relative; display: flex; align-items: center; }
+
+  .coche {
+    width: 26px;
+    height: 26px;
+    border-radius: 13px;
+    border: 1.5px solid var(--tertiaire);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    padding: 0;
+  }
+
+  .coche svg { display: none; }
+
+  .fait .coche { background: var(--accent); border-color: var(--accent); }
+  .fait .coche svg { display: block; }
+
+  .article-principal {
+    flex-grow: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0 8px 14px;
+    min-height: 50px;
+    background: transparent;
+    border: none;
+    text-align: left;
+  }
+
+  .article-textes { flex-grow: 1; min-width: 0; }
+
+  .article-nom { font-size: 17px; overflow-wrap: anywhere; }
+
+  .fait .article-nom { color: var(--secondaire); text-decoration: line-through; text-decoration-color: var(--tertiaire); }
+
+  .article-sous {
+    margin-top: 2px;
+    font-size: 13px;
+    color: var(--secondaire);
+    overflow-wrap: anywhere;
+  }
+
+  .indice {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 3px 8px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+
+  .indice.substitut, .indice.format { background: var(--ambre-doux); color: var(--ambre); }
+  .indice.introuvable { background: var(--rouge-doux); color: var(--rouge); }
+  .indice.ailleurs { background: var(--bleu-doux); color: var(--bleu); }
+  .indice.equivalent { background: var(--accent-doux); color: var(--accent); }
+  .indice.maison { background: var(--fond); color: var(--secondaire); }
+
+  .article-qte {
+    font-size: 15px;
+    color: var(--secondaire);
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  .auteur {
+    width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--accent-doux);
+    color: var(--accent);
+  }
+
+  .auteur.autre { background: var(--bleu-doux); color: var(--bleu); }
+
+  .bouton-info {
+    width: 44px;
+    height: 50px;
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--tertiaire);
+  }
+
+  .magasin .article-principal { min-height: 64px; }
+  .magasin .article-nom { font-size: 21px; font-weight: 600; }
+  .magasin .coche { width: 32px; height: 32px; border-radius: 16px; }
+  .magasin .article-qte { font-size: 17px; }
+
+  .pied-liste { padding: 18px 16px 0 16px; display: flex; flex-direction: column; gap: 10px; }
+
+  /* Boutons */
+  .bouton {
+    min-height: 50px;
+    padding: 12px 18px;
+    border-radius: 14px;
+    border: none;
+    background: var(--accent);
+    color: var(--sur-accent);
+    font-size: 17px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+  }
+
+  .bouton.large { width: 100%; }
+
+  .bouton.second { background: var(--surface); color: var(--accent); }
+
+  .bouton.discret { background: transparent; color: var(--accent); min-height: 44px; }
+
+  .bouton.danger { background: var(--rouge-doux); color: var(--rouge); }
+
+  .bouton:disabled { opacity: 0.45; }
+
+  .rangee { display: flex; gap: 10px; }
+  .rangee > * { flex: 1 1 0; }
+
+  /* Semaine */
+  .semaine-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .jour {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    min-height: 64px;
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    text-align: left;
+    position: relative;
+  }
+
+  .jour + .jour::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 70px;
+    height: 0.5px;
+    background: var(--separateur);
+  }
+
+  .jour-date { width: 42px; flex-shrink: 0; text-align: center; }
+
+  .jour-abr {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--secondaire);
+  }
+
+  .jour-num {
+    font-size: 24px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+
+  .jour.aujourdhui .jour-abr, .jour.aujourdhui .jour-num { color: var(--accent); }
+  .jour.passe .jour-num, .jour.passe .jour-repas { color: var(--tertiaire); }
+
+  .jour-repas { flex-grow: 1; min-width: 0; font-size: 17px; }
+  .jour-repas.vide { color: var(--tertiaire); }
+  .jour-detail { font-size: 13px; color: var(--secondaire); margin-top: 2px; }
+
+  .chevron { color: var(--tertiaire); flex-shrink: 0; }
+
+  /* Recettes */
+  .recette-ligne {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    width: 100%;
+    min-height: 68px;
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    text-align: left;
+    position: relative;
+  }
+
+  .recette-ligne + .recette-ligne::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 72px;
+    height: 0.5px;
+    background: var(--separateur);
+  }
+
+  .vignette {
+    width: 46px;
+    height: 46px;
+    border-radius: 11px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #FFFFFF;
+  }
+
+  .recette-titre { font-size: 17px; font-weight: 600; }
+  .recette-meta { font-size: 13px; color: var(--secondaire); margin-top: 2px; }
+
+  /* Feuille modale */
+  .voile {
+    position: fixed;
+    inset: 0;
+    background: var(--voile);
+    z-index: 40;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .voile.ouvert { opacity: 1; }
+
+  .feuille {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-width: 640px;
+    margin: 0 auto;
+    max-height: calc(100% - 44px - env(safe-area-inset-top, 0px));
+    background: var(--fond);
+    border-radius: 14px 14px 0 0;
+    box-shadow: var(--ombre-feuille);
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .feuille.ouvert { transform: translateY(0); }
+
+  .feuille-poignee {
+    width: 38px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--tertiaire);
+    margin: 7px auto 0 auto;
+    flex-shrink: 0;
+    opacity: 0.6;
+  }
+
+  .feuille-entete {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px 8px 20px;
+    flex-shrink: 0;
+  }
+
+  .feuille-entete h2 {
+    flex-grow: 1;
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .feuille-corps {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 0 calc(24px + env(safe-area-inset-bottom, 0px)) 0;
+  }
+
+  .formulaire { padding: 0 16px; display: flex; flex-direction: column; gap: 14px; }
+
+  .etiquette {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--secondaire);
+    margin: 0 0 6px 4px;
+  }
+
+  .aide { font-size: 13px; color: var(--secondaire); margin: 6px 4px 0 4px; line-height: 1.45; }
+
+  .compteur {
+    display: inline-flex;
+    align-items: center;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 0.5px solid var(--separateur);
+  }
+
+  .compteur button {
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    font-size: 22px;
+    color: var(--accent);
+  }
+
+  .compteur output {
+    min-width: 34px;
+    text-align: center;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .etape {
+    display: flex;
+    gap: 12px;
+    padding: 12px 14px;
+    position: relative;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .etape + .etape::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 50px;
+    height: 0.5px;
+    background: var(--separateur);
+  }
+
+  .etape-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 12px;
+    background: var(--accent-doux);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .choix-jours { display: flex; gap: 7px; overflow-x: auto; padding: 0 16px 4px 16px; scrollbar-width: none; }
+  .choix-jours::-webkit-scrollbar { display: none; }
+
+  .choix-jour {
+    flex-shrink: 0;
+    width: 58px;
+    padding: 8px 0;
+    border-radius: 12px;
+    border: 0.5px solid var(--separateur);
+    background: var(--surface);
+    text-align: center;
+  }
+
+  .choix-jour .jour-num { font-size: 20px; }
+  .choix-jour.pris { opacity: 0.55; }
+
+  /* Onglets */
+  .onglets {
+    display: flex;
+    background: var(--surface);
+    border-top: 0.5px solid var(--separateur);
+    padding: 5px 0 calc(4px + env(safe-area-inset-bottom, 0px)) 0;
+    flex-shrink: 0;
+  }
+
+  .onglet {
+    flex: 1 1 0;
+    min-height: 48px;
+    border: none;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--tertiaire);
+    position: relative;
+  }
+
+  .onglet.actif { color: var(--accent); }
+
+  .onglet .pastille {
+    position: absolute;
+    top: 2px;
+    left: calc(50% + 8px);
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: var(--rouge);
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Messages */
+  .toast {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    max-width: 608px;
+    margin: 0 auto;
+    background: var(--encre);
+    color: var(--fond);
+    border-radius: 14px;
+    padding: 12px 12px 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    z-index: 60;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+  }
+
+  .toast.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+  .toast span { flex-grow: 1; }
+
+  .toast button {
+    border: none;
+    background: transparent;
+    color: var(--accent);
+    font-weight: 700;
+    min-height: 36px;
+    padding: 0 8px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .toast button { color: var(--accent-doux); }
+  }
+
+  .vide {
+    padding: 48px 32px;
+    text-align: center;
+    color: var(--secondaire);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .vide strong { display: block; color: var(--encre); font-size: 19px; margin-bottom: 6px; }
+
+  .bandeau {
+    margin: 10px 16px 0 16px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: var(--ambre-doux);
+    color: var(--ambre);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .bandeau.info { background: var(--bleu-doux); color: var(--bleu); }
+
+  /* Accueil */
+  .accueil {
+    position: fixed;
+    inset: 0;
+    background: var(--fond);
+    z-index: 30;
+    overflow-y: auto;
+    padding: calc(40px + env(safe-area-inset-top, 0px)) 24px calc(32px + env(safe-area-inset-bottom, 0px)) 24px;
+  }
+
+  .accueil-contenu { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+
+  .logo {
+    width: 76px;
+    height: 76px;
+    border-radius: 18px;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .accueil h1 { margin: 6px 0 0 0; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; }
+
+  .accueil p { margin: 0; color: var(--secondaire); line-height: 1.55; }
+
+  .separation {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--tertiaire);
+    font-size: 13px;
+  }
+
+  .separation::before, .separation::after { content: ""; flex-grow: 1; height: 0.5px; background: var(--separateur); }
+
+  .rayon-ligne { display: flex; align-items: center; gap: 6px; min-height: 48px; padding: 4px 8px 4px 14px; position: relative; }
+  .rayon-ligne + .rayon-ligne::before { content: ""; position: absolute; top: 0; right: 0; left: 14px; height: 0.5px; background: var(--separateur); }
+  .rayon-ligne span { flex-grow: 1; }
+
+  .mini {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    border: none;
+    background: var(--fond);
+    color: var(--encre);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mini:disabled { opacity: 0.3; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px; }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 34px;
+    padding: 0 6px 0 12px;
+    border-radius: 17px;
+    background: var(--fond);
+    font-size: 15px;
+    border: none;
+  }
+
+  .chip svg { color: var(--secondaire); }
+
+  .guide-ligne { padding: 12px 14px; position: relative; }
+  .guide-ligne + .guide-ligne::before { content: ""; position: absolute; top: 0; right: 0; left: 14px; height: 0.5px; background: var(--separateur); }
+  .guide-haut { display: flex; align-items: center; gap: 10px; }
+  .guide-fr { flex-grow: 1; font-weight: 600; }
+  .guide-ca { margin-top: 3px; font-size: 16px; }
+  .guide-note { margin-top: 4px; font-size: 13px; color: var(--secondaire); line-height: 1.45; }
+
+  .etat {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--secondaire);
+  }
+
+  .etat i { width: 8px; height: 8px; border-radius: 4px; background: var(--accent); display: inline-block; }
+  .etat.hors i { background: var(--ambre); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+
+  @media (min-width: 700px) {
+    body { background: var(--fond); }
+    #app { border-left: 0.5px solid var(--separateur); border-right: 0.5px solid var(--separateur); }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="entete">
+    <div class="entete-ligne">
+      <div class="entete-textes">
+        <h1 id="titre">Courses</h1>
+        <div class="entete-sous" id="sous-titre">&nbsp;</div>
+      </div>
+      <div class="entete-actions" id="entete-actions"></div>
+    </div>
+  </header>
+
+  <div class="vues">
+    <section class="vue" id="vue-liste" aria-label="Liste de courses">
+      <form class="barre-ajout" id="form-ajout" autocomplete="off">
+        <label for="saisie" class="sr">Ajouter un article</label>
+        <input class="champ" id="saisie" type="text" enterkeyhint="done" placeholder="Ajouter un article">
+        <button type="submit" class="bouton" id="bouton-ajout" aria-label="Ajouter l'article" style="min-width: 50px; padding: 0 14px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </form>
+      <div class="puces" id="suggestions" aria-label="Suggestions"></div>
+      <div class="defile" id="liste-contenu"></div>
+    </section>
+
+    <section class="vue" id="vue-semaine" aria-label="Repas de la semaine" hidden>
+      <div class="defile" id="semaine-contenu"></div>
+    </section>
+
+    <section class="vue" id="vue-recettes" aria-label="Recettes" hidden>
+      <div class="barre-ajout">
+        <label for="recherche" class="sr">Chercher une recette</label>
+        <input class="champ" id="recherche" type="search" placeholder="Chercher une recette ou un ingrédient">
+      </div>
+      <div class="defile" id="recettes-contenu"></div>
+    </section>
+
+    <section class="vue" id="vue-foyer" aria-label="Foyer et réglages" hidden>
+      <div class="defile" id="foyer-contenu"></div>
+    </section>
+  </div>
+
+  <nav class="onglets" aria-label="Sections">
+    <button type="button" class="onglet actif" data-action="vue" data-vue="liste" aria-current="page">
+      <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.3 10.4a2 2 0 0 1-2 1.6H8.3a2 2 0 0 1-2-1.6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+      <span>Liste</span>
+      <span class="pastille" id="pastille-liste" hidden></span>
+    </button>
+    <button type="button" class="onglet" data-action="vue" data-vue="semaine">
+      <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>
+      <span>Semaine</span>
+    </button>
+    <button type="button" class="onglet" data-action="vue" data-vue="recettes">
+      <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3"/><path d="M9 7.5h6M9 11h4"/></svg>
+      <span>Recettes</span>
+    </button>
+    <button type="button" class="onglet" data-action="vue" data-vue="foyer">
+      <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 11 12 4l8.5 7"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5h4v5"/></svg>
+      <span>Foyer</span>
+    </button>
+  </nav>
+</div>
+
+<div class="accueil" id="accueil" hidden></div>
+
+<div class="voile" id="voile" hidden></div>
+<div class="feuille" id="feuille" role="dialog" aria-modal="true" aria-labelledby="feuille-titre" hidden>
+  <div class="feuille-poignee" aria-hidden="true"></div>
+  <div class="feuille-entete">
+    <h2 id="feuille-titre"></h2>
+    <button type="button" class="bouton-rond" id="feuille-fermer" aria-label="Fermer">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="feuille-corps" id="feuille-corps"></div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toast-texte"></span><button type="button" id="toast-action" hidden>Annuler</button></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

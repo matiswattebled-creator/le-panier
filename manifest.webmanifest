@@ -1,0 +1,15 @@
+{
+  "name": "Le Panier",
+  "short_name": "Le Panier",
+  "description": "Nos courses, nos repas de la semaine et nos recettes, synchronisés à deux.",
+  "lang": "fr-CA",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F2F2EE",
+  "theme_color": "#FFFFFF",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
