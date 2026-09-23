@@ -1,5 +1,5 @@
 // Garde l'app ouvrable sans réseau (utile dans les allées où ça ne capte pas).
-const CACHE = 'lepanier-v2-2';
+const CACHE = 'lepanier-v2-3';
 const FICHIERS = ['./', './index.html', './app.js', './cuisine.js', './firebase.js', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', function (ev) {
@@ -26,7 +26,10 @@ self.addEventListener('fetch', function (ev) {
   // Le code de l'app : le réseau d'abord (en revalidant) pour recevoir les mises à jour, le cache si hors ligne.
   if (estCode) {
     const cle = req.mode === 'navigate' ? './index.html' : url.pathname;
-    ev.respondWith(fetch(req.mode === 'navigate' ? req : new Request(req, { cache: 'no-cache' })).then(function (rep) {
+    const aJour = req.mode === 'navigate'
+      ? fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' })
+      : fetch(new Request(req, { cache: 'no-cache' }));
+    ev.respondWith(aJour.then(function (rep) {
       if (rep && rep.ok) {
         const copie = rep.clone();
         caches.open(CACHE).then(function (c) { c.put(cle, copie); });
