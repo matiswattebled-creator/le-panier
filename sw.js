@@ -1,9 +1,12 @@
 // Garde l'app ouvrable sans réseau (utile dans les allées où ça ne capte pas).
-const CACHE = 'lepanier-v2-1';
+const CACHE = 'lepanier-v2-2';
 const FICHIERS = ['./', './index.html', './app.js', './cuisine.js', './firebase.js', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', function (ev) {
-  ev.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FICHIERS); }).then(function () { return self.skipWaiting(); }));
+  ev.waitUntil(caches.open(CACHE).then(function (c) {
+    // « reload » : on ignore le cache du navigateur pour partir des fichiers à jour.
+    return c.addAll(FICHIERS.map(function (f) { return new Request(f, { cache: 'reload' }); }));
+  }).then(function () { return self.skipWaiting(); }));
 });
 
 self.addEventListener('activate', function (ev) {
@@ -18,14 +21,19 @@ self.addEventListener('fetch', function (ev) {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) { return; }
 
-  // Le code de l'app : le réseau d'abord pour recevoir les mises à jour, le cache si hors ligne.
-  if (req.mode === 'navigate' || /\.(html|js)$/.test(url.pathname) && !/firebase\.js$/.test(url.pathname)) {
-    ev.respondWith(fetch(req).then(function (rep) {
-      const copie = rep.clone();
-      caches.open(CACHE).then(function (c) { c.put(req.mode === 'navigate' ? './index.html' : req, copie); });
+  const estCode = req.mode === 'navigate' || (/\.(html|js|webmanifest)$/.test(url.pathname) && !/firebase\.js$/.test(url.pathname));
+
+  // Le code de l'app : le réseau d'abord (en revalidant) pour recevoir les mises à jour, le cache si hors ligne.
+  if (estCode) {
+    const cle = req.mode === 'navigate' ? './index.html' : url.pathname;
+    ev.respondWith(fetch(req.mode === 'navigate' ? req : new Request(req, { cache: 'no-cache' })).then(function (rep) {
+      if (rep && rep.ok) {
+        const copie = rep.clone();
+        caches.open(CACHE).then(function (c) { c.put(cle, copie); });
+      }
       return rep;
     }).catch(function () {
-      return caches.match(req.mode === 'navigate' ? './index.html' : req).then(function (r) { return r || caches.match('./index.html'); });
+      return caches.match(cle).then(function (r) { return r || caches.match('./index.html'); });
     }));
     return;
   }

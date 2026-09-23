@@ -10,7 +10,7 @@ const CONFIG_FIREBASE = {
   appId: '1:56342358750:web:97f51a64fce1998792b04f'
 };
 
-const VERSION = '2.1';
+const VERSION = '2.2';
 const $ = function (id) { return document.getElementById(id); };
 const params = new URLSearchParams(location.search);
 const MODE_DEMO = params.has('demo') || !CONFIG_FIREBASE.apiKey;
